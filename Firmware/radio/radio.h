@@ -72,6 +72,9 @@ extern bool feature_opportunistic_resend;
 extern uint8_t feature_mavlink_framing;
 extern bool feature_rtscts;
 
+// SiKening: netid_found
+extern bool netid_found;
+
 /// System clock frequency
 ///
 /// @todo This is standard for the Si1000 if running off the internal
@@ -105,7 +108,7 @@ extern void	vprintfl(const char * fmt, va_list ap) __reentrant;
 extern void	printfl(const char *fmt, ...) __reentrant;
 #define printf(_fmt, args...)	printfl(_fmt, ##args)		///< avoid fighting with the library printf() prototype
 
-/// start a capture of printf data 
+/// start a capture of printf data
 extern void printf_start_capture(__xdata uint8_t *buf, uint8_t size);
 
 /// end printf capture, returning number of bytes that have been captured
@@ -243,14 +246,14 @@ extern uint8_t radio_air_rate(void);
 /// set the radio transmit power (in dBm)
 ///
 /// @param power		The desired transmit power in dBm
-///				
+///
 ///
 extern void radio_set_transmit_power(uint8_t power);
 
 /// get the currend transmit power (in dBm)
 ///
 /// @return			The actual transmit power in dBm
-///				
+///
 ///
 extern uint8_t radio_get_transmit_power(void);
 
@@ -288,5 +291,8 @@ extern int16_t radio_temperature(void);
 #endif
 
 extern void radio_set_diversity(bool enable);
+
+// SiKening: we need to call radio_init() for the SiKening...
+extern void radio_init(void);
 
 #endif // _RADIO_H_

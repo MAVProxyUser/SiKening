@@ -81,7 +81,7 @@ static void hardware_init(void);
 
 /// Initialise the radio and bring it online.
 ///
-static void radio_init(void);
+void radio_init(void);
 
 /// statistics for radio and serial errors
 __pdata struct error_counts errors;
@@ -92,6 +92,9 @@ bool feature_golay;
 bool feature_opportunistic_resend;
 uint8_t feature_mavlink_framing;
 bool feature_rtscts;
+
+// SiKening: Did we find a new netid?
+bool netid_found;
 
 void
 main(void)
@@ -119,6 +122,9 @@ main(void)
 	hardware_init();
 
 	// do radio initialisation
+	// SiKening: start by setting the netid_found to 0
+	// this can't be done at define, so meh...
+	netid_found = 0;
 	radio_init();
 
 	// turn on the receiver
@@ -141,7 +147,7 @@ panic(char *fmt, ...)
 
 	EA = 1;
 	ES0 = 1;
-	
+
 	delay_msec(1000);
 
 	// generate a software reset
@@ -170,7 +176,7 @@ hardware_init(void)
 
 #ifdef _BOARD_RFD900A			// Redefine port skips to override bootloader defs
 	P0SKIP  =  0xCF;                // P0 UART avail on XBAR
-	P1SKIP  =  0xF8;                // P1 SPI1, CEX0 avail on XBAR 
+	P1SKIP  =  0xF8;                // P1 SPI1, CEX0 avail on XBAR
 	P2SKIP  =  0x01;                // P2 CEX3 avail on XBAR, rest GPIO
 #endif
 
@@ -189,10 +195,10 @@ hardware_init(void)
 #else
 	XBR1	|= 0x40;	// enable SPI in 3-wire mode
 	P1MDOUT	|= 0xF5;	// SCK1, MOSI1, MISO1 push-pull
-#endif	
+#endif
 	SFRPAGE	 = CONFIG_PAGE;
 	P1DRV	|= 0xF5;	// SPI signals use high-current mode, LEDs and PAEN High current drive
-	P2DRV	|= 0xFF;	
+	P2DRV	|= 0xFF;
 	SFRPAGE	 = LEGACY_PAGE;
 	SPI1CFG	 = 0x40;	// master mode
 	SPI1CN	 = 0x00;	// 3 wire master mode
@@ -237,7 +243,7 @@ hardware_init(void)
 	XBR2	 =  0x40;		// Crossbar (GPIO) enable
 }
 
-static void
+void
 radio_init(void)
 {
 	__pdata uint32_t freq_min, freq_max;
@@ -353,12 +359,19 @@ radio_init(void)
 	// add another offset based on network ID. This means that
 	// with different network IDs we will have much lower
 	// interference
-	srand(param_get(PARAM_NETID));
-	if (num_fh_channels > 5) {
-		freq_min += ((unsigned long)(rand()*625)) % channel_spacing;
+	// SiKening: if we found the netid, init as normal, otherwise,
+	// choose the midpoint for the base offset.
+	if (netid_found) {
+		srand(param_get(PARAM_NETID));
+		if (num_fh_channels > 5) {
+			freq_min += ((unsigned long)(rand()*625)) % channel_spacing;
+		}
+	} else {
+		freq_min += channel_spacing/2;
 	}
-	debug("freq low=%lu high=%lu spacing=%lu\n", 
-	       freq_min, freq_min+(num_fh_channels*channel_spacing), 
+
+	debug("freq low=%lu high=%lu spacing=%lu\n",
+	       freq_min, freq_min+(num_fh_channels*channel_spacing),
 	       channel_spacing);
 
 	// set the frequency and channel spacing
@@ -386,7 +399,7 @@ radio_init(void)
 
 	// setup transmit power
 	radio_set_transmit_power(txpower);
-	
+
 	// report the real transmit power in settings
 	param_set(PARAM_TXPOWER, radio_get_transmit_power());
 
@@ -401,4 +414,3 @@ radio_init(void)
 	// initialise TDM system
 	tdm_init();
 }
-

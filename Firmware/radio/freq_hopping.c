@@ -57,6 +57,7 @@ __pdata static volatile uint8_t receive_channel;
 /// map between hopping channel numbers and physical channel numbers
 __xdata static uint8_t channel_map[MAX_FREQ_CHANNELS];
 
+
 // a vary simple array shuffle
 // based on shuffle from
 // http://benpfaff.org/writings/clc/shuffle.html
@@ -72,7 +73,7 @@ static inline void shuffle(__xdata uint8_t *array, uint8_t n)
 }
 
 // initialise frequency hopping logic
-void 
+void
 fhop_init(uint16_t netid)
 {
 	uint8_t i;
@@ -81,26 +82,31 @@ fhop_init(uint16_t netid)
 	for (i = 0; i < num_fh_channels; i++) {
 		channel_map[i] = i;
 	}
-	srand(netid);
-	shuffle(channel_map, num_fh_channels);
+	// SiKening: we only shuffle if the netid is found, otherwise not
+	// all channels are guaranteed to be in the channel map.
+	// this causes problems for some reason..... ???
+	//if (netid_found) {
+		srand(netid);
+		shuffle(channel_map, num_fh_channels);
+	//}
 }
 
 // tell the TDM code what channel to transmit on
-uint8_t 
+uint8_t
 fhop_transmit_channel(void)
 {
 	return channel_map[transmit_channel];
 }
 
 // tell the TDM code what channel to receive on
-uint8_t 
+uint8_t
 fhop_receive_channel(void)
 {
 	return channel_map[receive_channel];
 }
 
 // called when the transmit windows changes owner
-void 
+void
 fhop_window_change(void)
 {
 	transmit_channel = (transmit_channel + 1) % num_fh_channels;
@@ -117,7 +123,7 @@ fhop_window_change(void)
 }
 
 // called when we get or lose radio lock
-void 
+void
 fhop_set_locked(bool locked)
 {
 #if DEBUG
@@ -136,4 +142,3 @@ fhop_set_locked(bool locked)
 		receive_channel = (receive_channel+1) % num_fh_channels;
 	}
 }
-

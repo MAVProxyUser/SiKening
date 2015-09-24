@@ -66,4 +66,7 @@ extern void fhop_set_locked(bool locked);
 /// how many channels are we hopping over
 extern __pdata uint8_t num_fh_channels;
 
+// SiKening: netid_found
+extern bool netid_found;
+
 #endif // _FREQ_HOPPING_H_

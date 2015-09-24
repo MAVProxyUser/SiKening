@@ -56,6 +56,7 @@ static void	set_frequency_registers(__pdata uint32_t frequency);
 static uint32_t scale_uint32(__pdata uint32_t value, __pdata uint32_t scale);
 static void	clear_status_registers(void);
 
+
 // save and restore radio interrupt. We use this rather than
 // __critical to ensure we don't disturb the timer interrupt at all.
 // minimal tick drift is critical for TDM
@@ -94,7 +95,7 @@ radio_receive_packet(uint8_t *length, __xdata uint8_t * __pdata buf)
 	// useful for testing high packet loss
 	if ((timer_entropy() & 0x7) != 0) {
 		radio_receiver_on();
-		goto failed;		
+		goto failed;
 	}
 #endif
 
@@ -114,7 +115,7 @@ radio_receive_packet(uint8_t *length, __xdata uint8_t * __pdata buf)
 	// enable the receiver for the next packet. This also
 	// enables the EX0 interrupt
 	elen = receive_packet_length;
-	radio_receiver_on();	
+	radio_receiver_on();
 
 	if (elen < 12 || (elen%6) != 0) {
 		// not a valid length
@@ -126,17 +127,29 @@ radio_receive_packet(uint8_t *length, __xdata uint8_t * __pdata buf)
 	errcount = golay_decode(6, buf, gout);
 	if (gout[0] != netid[0] ||
 	    gout[1] != netid[1]) {
-		// its not for our network ID 
+		// its not for our network ID
 		debug("netid %x %x\n",
 		       (unsigned)gout[0],
 		       (unsigned)gout[1]);
-		goto failed;
+
+		// SiKening: don't care, let's steal the netid
+		//goto failed;
+		netid[0] = (unsigned)gout[0];
+		netid[1] = (unsigned)gout[1];
+		if (param_get(PARAM_NETID) != (netid[0] + (netid[1] << 8)) || !netid_found) {
+			netid_found = 1;
+			param_set(PARAM_NETID, (netid[0] + (netid[1] << 8)));
+			LED_RADIO = LED_OFF;
+			LED_BOOTLOADER = LED_ON;
+			param_save();
+			radio_init();
+		}
 	}
 
 	if (6*((gout[2]+2)/3+2) != elen) {
 		debug("rx len mismatch1 %u %u\n",
 		       (unsigned)gout[2],
-		       (unsigned)elen);		
+		       (unsigned)elen);
 		goto failed;
 	}
 
@@ -154,8 +167,8 @@ radio_receive_packet(uint8_t *length, __xdata uint8_t * __pdata buf)
 
 	if (crc1 != crc2) {
 		debug("crc1=%x crc2=%x len=%u [%x %x]\n",
-		       (unsigned)crc1, 
-		       (unsigned)crc2, 
+		       (unsigned)crc1,
+		       (unsigned)crc2,
 		       (unsigned)*length,
 		       (unsigned)buf[0],
 		       (unsigned)buf[1]);
@@ -338,7 +351,7 @@ radio_transmit_simple(__data uint8_t length, __xdata uint8_t * __pdata buf, __pd
 		if (transmit_started && length != 0 && (status & EZRADIOPRO_ITXFFAEM)) {
 			// the FIFO is below the low threshold. We
 			// should be able to put in
-			// 64-TX_FIFO_THRESHOLD_LOW more bytes, but 
+			// 64-TX_FIFO_THRESHOLD_LOW more bytes, but
 			// it seems that this gives us an occasional
 			// fifo overflow error, so put in just 4 bytes
 			// at a time
@@ -393,7 +406,7 @@ radio_transmit_simple(__data uint8_t length, __xdata uint8_t * __pdata buf, __pd
 				}
 				return false;
 			}
-			return true;			
+			return true;
 		}
 
 	}
@@ -429,7 +442,7 @@ radio_transmit_golay(uint8_t length, __xdata uint8_t * __pdata buf, __pdata uint
 
 	if (length > (sizeof(radio_buffer)/2)-6) {
 		debug("golay packet size %u\n", (unsigned)length);
-		panic("oversized golay packet");		
+		panic("oversized golay packet");
 	}
 
 	// rounded length
@@ -446,7 +459,7 @@ radio_transmit_golay(uint8_t length, __xdata uint8_t * __pdata buf, __pdata uint
 	// golay encode the header
 	golay_encode(3, gin, radio_buffer);
 
-	// next add a CRC, we round to 3 bytes for simplicity, adding 
+	// next add a CRC, we round to 3 bytes for simplicity, adding
 	// another copy of the length in the spare byte
 	crc = crc16(length, buf);
 	gin[0] = crc&0xFF;
@@ -479,7 +492,7 @@ radio_transmit(uint8_t length, __xdata uint8_t * __pdata buf, __pdata uint16_t t
 #ifdef _BOARD_RFD900A
 	PA_ENABLE = 1;		// Set PA_Enable to turn on PA prior to TX cycle
 #endif
-	
+
 	if (!feature_golay) {
 		ret = radio_transmit_simple(length, buf, timeout_ticks);
 	} else {
@@ -610,7 +623,7 @@ radio_set_channel(uint8_t channel)
 
 // get the tx/rx frequency channel
 //
-uint8_t 
+uint8_t
 radio_get_channel(void)
 {
 	return settings.current_channel;
@@ -763,7 +776,7 @@ radio_configure(__pdata uint8_t air_rate)
 		// instead of the hardware CRC, as we need to correct
 		// bit errors before checking the CRC
 		register_write(EZRADIOPRO_DATA_ACCESS_CONTROL,
-			       EZRADIOPRO_ENPACTX | 
+			       EZRADIOPRO_ENPACTX |
 			       EZRADIOPRO_ENPACRX);
 		// 2 sync bytes and no header bytes
 		register_write(EZRADIOPRO_HEADER_CONTROL_2, EZRADIOPRO_HDLEN_0BYTE | EZRADIOPRO_SYNCLEN_2BYTE);
@@ -772,7 +785,7 @@ radio_configure(__pdata uint8_t air_rate)
 		register_write(EZRADIOPRO_HEADER_CONTROL_1, 0x00);
 	} else {
 		register_write(EZRADIOPRO_DATA_ACCESS_CONTROL,
-			       EZRADIOPRO_ENPACTX | 
+			       EZRADIOPRO_ENPACTX |
 			       EZRADIOPRO_ENPACRX |
 			       EZRADIOPRO_ENCRC |
 			       EZRADIOPRO_CRC_16);
@@ -792,7 +805,7 @@ radio_configure(__pdata uint8_t air_rate)
 
 	settings.preamble_length = 16;
 
-	register_write(EZRADIOPRO_PREAMBLE_LENGTH, settings.preamble_length); // nibbles 
+	register_write(EZRADIOPRO_PREAMBLE_LENGTH, settings.preamble_length); // nibbles
 	register_write(EZRADIOPRO_PREAMBLE_DETECTION_CONTROL, 5<<3); // 5 nibbles
 
 	// setup minimum output power during startup
@@ -880,7 +893,7 @@ radio_configure(__pdata uint8_t air_rate)
 
 // set the radio transmit power (in dBm)
 //
-void 
+void
 radio_set_transmit_power(uint8_t power)
 {
 	uint8_t i;
@@ -913,7 +926,7 @@ radio_set_transmit_power(uint8_t power)
 
 // get the current transmit power (in dBm)
 //
-uint8_t 
+uint8_t
 radio_get_transmit_power(void)
 {
 	return settings.transmit_power;
@@ -1213,4 +1226,3 @@ rxfail:
 	}
 	radio_receiver_on();
 }
-
