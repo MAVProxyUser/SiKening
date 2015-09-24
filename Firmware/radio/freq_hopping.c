@@ -32,6 +32,8 @@
 /// Frequency hop managerment
 ///
 
+#define DEBUG 1
+
 #include <stdarg.h>
 #include "radio.h"
 #include "freq_hopping.h"
