@@ -128,7 +128,7 @@ radio_receive_packet(uint8_t *length, __xdata uint8_t * __pdata buf)
 	if (gout[0] != netid[0] ||
 	    gout[1] != netid[1]) {
 		// its not for our network ID
-		debug("netid %x %x\n",
+		printf("netid %x %x\n",
 		       (unsigned)gout[0],
 		       (unsigned)gout[1]);
 

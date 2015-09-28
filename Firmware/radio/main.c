@@ -69,7 +69,7 @@ extern void    T3_ISR(void)            __interrupt(INTERRUPT_TIMER3);
 
 //@}
 
-__code const char g_banner_string[] = "SiK " stringify(APP_VERSION_HIGH) "." stringify(APP_VERSION_LOW) " on " BOARD_NAME;
+__code const char g_banner_string[] = "SiKening " stringify(APP_VERSION_HIGH) "." stringify(APP_VERSION_LOW) " on " BOARD_NAME;
 __code const char g_version_string[] = stringify(APP_VERSION_HIGH) "." stringify(APP_VERSION_LOW);
 
 __pdata enum BoardFrequency	g_board_frequency;	///< board info from the bootloader
@@ -360,11 +360,13 @@ radio_init(void)
 	// SiKening: if we found the netid, init as normal, otherwise,
 	// choose the midpoint for the base offset.
 	if (netid_found) {
+		printf("Found NetID!\n");
 		srand(param_get(PARAM_NETID));
 		if (num_fh_channels > 5) {
 			freq_min += ((unsigned long)(rand()*625)) % channel_spacing;
 		}
 	} else {
+                printf("ummm... that's not it!\n");
 		freq_min += channel_spacing/2;
 	}
 

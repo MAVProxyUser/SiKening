@@ -332,8 +332,8 @@ class uploader(object):
                 self.expect('OK', timeout=1.1)
 		for i in range(5):
 			self.send('\r\nATI\r\n')
-                        if not self.expect('SiK .* on', timeout=0.5):
-                                print("Failed to get SiK banner")
+                        if not self.expect('SiKening .* on', timeout=0.5):
+                                print("Failed to get SiKening banner")
                                 continue
                         self.send('\r\n')
                         time.sleep(0.2)

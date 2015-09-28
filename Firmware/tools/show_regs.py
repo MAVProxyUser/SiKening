@@ -25,7 +25,7 @@ def show_regs(device):
     time.sleep(1)
     ser.send('\r\nATI\r\n')
     try:
-        ser.expect(['OK','SiK .* on HM-TRP'], timeout=2)
+        ser.expect(['OK','SiKening .* on HM-TRP'], timeout=2)
     except fdpexpect.TIMEOUT:
         print("timeout")
         return
