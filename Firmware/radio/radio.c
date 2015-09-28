@@ -27,7 +27,7 @@
 // OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#define DEBUG 1
+//#define DEBUG 1
 
 #include "board.h"
 #include "radio.h"
