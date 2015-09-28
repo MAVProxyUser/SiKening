@@ -41,7 +41,6 @@ class ATCommandSet(object):
     PARAM_NETID		= 3
     PARAM_TXPOWER	= 4
     PARAM_ECC		= 5
-    PARAM_MAVLINK	= 6
     PARAM_OPPRESEND	= 7
     PARAM_MIN_FREQ	= 8
     PARAM_MAX_FREQ	= 9
@@ -230,7 +229,6 @@ if __name__ == '__main__':
                   'netid' : ATCommandSet.PARAM_NETID, 
                   'txpower' : ATCommandSet.PARAM_TXPOWER, 
                   'ecc' : ATCommandSet.PARAM_ECC, 
-                  'mavlink' : ATCommandSet.PARAM_MAVLINK, 
                   'oppresend' : ATCommandSet.PARAM_OPPRESEND, 
                   'minfreq' : ATCommandSet.PARAM_MIN_FREQ, 
                   'maxfreq' : ATCommandSet.PARAM_MAX_FREQ, 

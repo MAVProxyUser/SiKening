@@ -131,9 +131,6 @@ __pdata uint8_t test_display;
 /// set when we should send a statistics packet on the next round
 static __bit send_statistics;
 
-/// set when we should send a MAVLink report pkt
-extern bool seen_mavlink;
-
 struct tdm_trailer {
 	uint16_t window:13;
 	uint16_t command:1;
@@ -503,11 +500,6 @@ tdm_serial_loop(void)
 			test_display = 0;
 		}
 
-		if (seen_mavlink && feature_mavlink_framing && !at_mode_active) {
-			seen_mavlink = false;
-			MAVLink_report();
-		}
-
 		// set right receive channel
 		radio_set_channel(fhop_receive_channel());
 
@@ -867,7 +859,6 @@ golay_test(void)
 void
 tdm_init(void)
 {
-	__pdata uint16_t i;
 	__pdata uint8_t air_rate = radio_air_rate();
 	__pdata uint32_t window_width;
 
@@ -934,14 +925,6 @@ tdm_init(void)
 	// length, so we get the right flight time estimates, while
 	// not changing the round timings
 	packet_latency += ((settings.preamble_length-10)/2) * ticks_per_byte;
-
-	// tell the packet subsystem our max packet size, which it
-	// needs to know for MAVLink packet boundary detection
-	i = (tx_window_width - packet_latency) / ticks_per_byte;
-	if (i > max_data_packet_length) {
-		i = max_data_packet_length;
-	}
-	packet_set_max_xmit(i);
 
 	// crc_test();
 

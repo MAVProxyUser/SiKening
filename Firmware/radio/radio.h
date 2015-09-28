@@ -69,7 +69,6 @@ extern __pdata uint8_t pdata_canary;
 /// optional features
 extern bool feature_golay;
 extern bool feature_opportunistic_resend;
-extern uint8_t feature_mavlink_framing;
 extern bool feature_rtscts;
 
 // SiKening: netid_found
@@ -263,9 +262,6 @@ extern uint8_t radio_get_transmit_power(void);
 ///
 ///
 extern bool radio_receive_in_progress(void);
-
-/// send a MAVLink status report packet
-void MAVLink_report(void);
 
 struct radio_settings {
 	uint32_t frequency;
